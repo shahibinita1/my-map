@@ -31,3 +31,61 @@ handler.setInputAction((click) => {
     alert(info);
   }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+// ---------- Interactive control panel ----------
+
+// Build a small floating panel of buttons
+const panel = document.createElement('div');
+panel.style.cssText = `
+  position: absolute; top: 10px; left: 10px; z-index: 999;
+  background: rgba(40,40,40,0.85); padding: 10px; border-radius: 8px;
+  font-family: sans-serif; color: white; display: flex; flex-direction: column; gap: 6px;
+`;
+panel.innerHTML = `
+  <button id="btnBuildings">Hide buildings</button>
+  <button id="btnShadows">Enable sunlight & shadows</button>
+  <button id="btnColor">Color by height</button>
+  <button id="btnReset">Reset view</button>
+`;
+document.body.appendChild(panel);
+
+// 1. Toggle buildings on/off
+document.getElementById('btnBuildings').onclick = (e) => {
+  tileset.show = !tileset.show;
+  e.target.textContent = tileset.show ? 'Hide buildings' : 'Show buildings';
+};
+
+// 2. Toggle sunlight + shadows
+let lighting = false;
+document.getElementById('btnShadows').onclick = (e) => {
+  lighting = !lighting;
+  viewer.scene.globe.enableLighting = lighting;
+  viewer.shadows = lighting;
+  e.target.textContent = lighting ? 'Disable sunlight & shadows' : 'Enable sunlight & shadows';
+};
+
+// 3. Color buildings by height
+let colored = false;
+document.getElementById('btnColor').onclick = (e) => {
+  colored = !colored;
+  if (colored) {
+    tileset.style = new Cesium.Cesium3DTileStyle({
+      color: {
+        conditions: [
+          ['${Height} >= 50', 'color("red")'],
+          ['${Height} >= 25', 'color("orange")'],
+          ['${Height} >= 10', 'color("yellow")'],
+          ['true', 'color("lightgreen")'],
+        ],
+      },
+    });
+    e.target.textContent = 'Reset color';
+  } else {
+    tileset.style = undefined;
+    e.target.textContent = 'Color by height';
+  }
+};
+
+// 4. Reset camera back to the buildings
+document.getElementById('btnReset').onclick = () => {
+  viewer.zoomTo(tileset);
+};
